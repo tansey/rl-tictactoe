@@ -19,6 +19,9 @@ for whether it is playing to a win or a draw. Even more to the point, the agent 
 where it basically has a single path that it wants to take to reach a winning state. If the path is blocked
 by the opponent, the values will then usually all become 0.5 and the player is effectively moving randomly.
 
+Note that if you use a loss value of -1, then the agent learns to play the optimal strategy in the minimax
+sense.
+
 License
 -------
 Created by Wesley Tansey
