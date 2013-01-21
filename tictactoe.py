@@ -24,6 +24,8 @@ Code released under the MIT license.
 
 import random
 from copy import copy, deepcopy
+import csv
+import matplotlib.pyplot as plt
 
 EMPTY = 0
 PLAYER_X = 1
@@ -90,11 +92,12 @@ def enumstates(state, idx, agent):
             enumstates(state, idx+1, agent)
 
 class Agent(object):
-    def __init__(self, player, verbose = False, lossval = 0):
+    def __init__(self, player, verbose = False, lossval = 0, learning = True):
         self.values = {}
         self.player = player
         self.verbose = verbose
         self.lossval = lossval
+        self.learning = learning
         self.epsilon = 0.1
         self.alpha = 0.99
         self.prevstate = None
@@ -130,7 +133,7 @@ class Agent(object):
         return random.choice(available)
 
     def greedy(self, state):
-        maxval = -1
+        maxval = -50000
         maxmove = None
         if self.verbose:
             cells = []
@@ -153,7 +156,7 @@ class Agent(object):
         return maxmove
 
     def backup(self, nextval):
-        if self.prevstate != None:
+        if self.prevstate != None and self.learning:
             self.values[self.prevstate] += self.alpha * (nextval - self.prevscore)
 
     def lookup(self, state):
@@ -227,15 +230,104 @@ def play(agent1, agent2):
             return winner
     return winner
 
+def measure_performance_vs_random(agent1, agent2):
+    epsilon1 = agent1.epsilon
+    epsilon2 = agent2.epsilon
+    agent1.epsilon = 0
+    agent2.epsilon = 0
+    agent1.learning = False
+    agent2.learning = False
+    r1 = Agent(1)
+    r2 = Agent(2)
+    r1.epsilon = 1
+    r2.epsilon = 1
+    probs = [0,0,0,0,0,0]
+    games = 100
+    for i in range(games):
+        winner = play(agent1, r2)
+        if winner == PLAYER_X:
+            probs[0] += 1.0 / games
+        elif winner == PLAYER_O:
+            probs[1] += 1.0 / games
+        else:
+            probs[2] += 1.0 / games
+    for i in range(games):
+        winner = play(r1, agent2)
+        if winner == PLAYER_O:
+            probs[3] += 1.0 / games
+        elif winner == PLAYER_X:
+            probs[4] += 1.0 / games
+        else:
+            probs[5] += 1.0 / games
+    agent1.epsilon = epsilon1
+    agent2.epsilon = epsilon2
+    agent1.learning = True
+    agent2.learning = True
+    return probs
+
+def measure_performance_vs_each_other(agent1, agent2):
+    #epsilon1 = agent1.epsilon
+    #epsilon2 = agent2.epsilon
+    #agent1.epsilon = 0
+    #agent2.epsilon = 0
+    #agent1.learning = False
+    #agent2.learning = False
+    probs = [0,0,0]
+    games = 100
+    for i in range(games):
+        winner = play(agent1, agent2)
+        if winner == PLAYER_X:
+            probs[0] += 1.0 / games
+        elif winner == PLAYER_O:
+            probs[1] += 1.0 / games
+        else:
+            probs[2] += 1.0 / games
+    #agent1.epsilon = epsilon1
+    #agent2.epsilon = epsilon2
+    #agent1.learning = True
+    #agent2.learning = True
+    return probs
+
+
 if __name__ == "__main__":
-    p1 = Agent(1)
-    p2 = Agent(2)
+    p1 = Agent(1, lossval = -1)
+    p2 = Agent(2, lossval = -1)
+    r1 = Agent(1, learning = False)
+    r2 = Agent(2, learning = False)
+    r1.epsilon = 1
+    r2.epsilon = 1
+    series = ['P1-Win','P1-Lose','P1-Draw','P2-Win','P2-Lose','P2-Draw']
+    #series = ['P1-Win', 'P2-Win', 'Draw']
+    colors = ['r','b','g','c','m','b']
+    markers = ['+', '.', 'o', '*', '^', 's']
+    f = open('results.csv', 'wb')
+    writer = csv.writer(f)    
+    writer.writerow(series)
+    perf = [[] for _ in range(len(series) + 1)]
     for i in range(10000):
         if i % 10 == 0:
             print 'Game: {0}'.format(i)
+            probs = measure_performance_vs_random(p1, p2)
+            writer.writerow(probs)
+            f.flush()
+            perf[0].append(i)
+            for idx,x in enumerate(probs):
+                perf[idx+1].append(x)
         winner = play(p1,p2)
         p1.episode_over(winner)
+        #winner = play(r1,p2)
         p2.episode_over(winner)
+    f.close()
+    for i in range(1,len(perf)):
+        plt.plot(perf[0], perf[i], label=series[i-1], color=colors[i-1])
+    plt.xlabel('Episodes')
+    plt.ylabel('Probability')
+    plt.title('RL Agent Performance vs. Random Agent\n({0} loss value, self-play)'.format(p1.lossval))
+    #plt.title('P1 Loss={0} vs. P2 Loss={1}'.format(p1.lossval, p2.lossval))
+    plt.legend()
+    #plt.show()
+    #plt.savefig('p1loss{0}vsp2loss{1}.png'.format(p1.lossval, p2.lossval))
+    plt.savefig('selfplay_random_{0}loss.png'.format(p1.lossval))
     while True:
         p2.verbose = True
         p1 = Human(1)
