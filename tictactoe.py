@@ -90,10 +90,11 @@ def enumstates(state, idx, agent):
             enumstates(state, idx+1, agent)
 
 class Agent(object):
-    def __init__(self, player, verbose = False):
+    def __init__(self, player, verbose = False, lossval = 0):
         self.values = {}
         self.player = player
         self.verbose = verbose
+        self.lossval = lossval
         self.epsilon = 0.1
         self.alpha = 0.99
         self.prevstate = None
@@ -102,6 +103,7 @@ class Agent(object):
         enumstates(emptystate(), 0, self)
 
     def episode_over(self, winner):
+        self.backup(self.winnerval(winner))
         self.prevstate = None
         self.prevscore = 0
 
@@ -163,12 +165,17 @@ class Agent(object):
     def add(self, state):
         winner = gameover(state)
         tup = self.statetuple(state)
+        self.values[tup] = self.winnerval(winner)
+
+    def winnerval(self, winner):
         if winner == self.player:
-            self.values[tup] = 1
+            return 1
         elif winner == EMPTY:
-            self.values[tup] = 0.5
+            return 0.5
+        elif winner == DRAW:
+            return 0
         else:
-            self.values[tup] = 0
+            return self.lossval
 
     def printvalues(self):
         vals = deepcopy(self.values)
