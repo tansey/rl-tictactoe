@@ -19,8 +19,10 @@ for whether it is playing to a win or a draw. Even more to the point, the agent 
 where it basically has a single path that it wants to take to reach a winning state. If the path is blocked
 by the opponent, the values will then usually all become 0.5 and the player is effectively moving randomly.
 
-Author
-------
+License
+-------
 Created by Wesley Tansey
+
 1/21/2013
+
 Code released under the MIT license.
