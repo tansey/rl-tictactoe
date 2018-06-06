@@ -1,15 +1,15 @@
 """
-Reference implementation of the Tic-Tac-Toe value function learning agent described in Chapter 1 of 
+Reference implementation of the Tic-Tac-Toe value function learning agent described in Chapter 1 of
 "Reinforcement Learning: An Introduction" by Sutton and Barto. The agent contains a lookup table that
 maps states to values, where initial values are 1 for a win, 0 for a draw or loss, and 0.5 otherwise.
 At every move, the agent chooses either the maximum-value move (greedy) or, with some probability
-epsilon, a random move (exploratory); by default epsilon=0.1. The agent updates its value function 
+epsilon, a random move (exploratory); by default epsilon=0.1. The agent updates its value function
 (the lookup table) after every greedy move, following the equation:
 
     V(s) <- V(s) + alpha * [ V(s') - V(s) ]
 
 This particular implementation addresses the question posed in Exercise 1.1:
-    
+
     What would happen if the RL agent taught itself via self-play?
 
 The result is that the agent learns only how to maximize its own potential payoff, without consideration
@@ -39,7 +39,7 @@ def printboard(state):
     for i in range(3):
         for j in range(3):
             cells.append(NAMES[state[i][j]].center(6))
-    print BOARD_FORMAT.format(*cells)
+    print(BOARD_FORMAT.format(*cells))
 
 def emptystate():
     return [[EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY]]
@@ -85,8 +85,8 @@ def enumstates(state, idx, agent):
         winner = gameover(state)
         if winner != EMPTY:
             return
-        i = idx / 3
-        j = idx % 3
+        i = int(idx / 3)
+        j = int(idx % 3)
         for val in range(3):
             state[i][j] = val
             enumstates(state, idx+1, agent)
@@ -151,7 +151,7 @@ class Agent(object):
                 elif self.verbose:
                     cells.append(NAMES[state[i][j]].center(6))
         if self.verbose:
-            print BOARD_FORMAT.format(*cells)
+            print(BOARD_FORMAT.format(*cells))
         self.backup(maxval)
         return maxmove
 
@@ -193,14 +193,14 @@ class Agent(object):
                         state[i][j] = EMPTY
                     else:
                         cells.append(NAMES[state[i][j]].center(3))
-            print BOARD_FORMAT.format(*cells)
+            print(BOARD_FORMAT.format(*cells))
 
     def statetuple(self, state):
         return (tuple(state[0]),tuple(state[1]),tuple(state[2]))
 
     def log(self, s):
         if self.verbose:
-            print s
+            print(s)
 
 class Human(object):
     def __init__(self, player):
@@ -208,14 +208,14 @@ class Human(object):
 
     def action(self, state):
         printboard(state)
-        action = raw_input('Your move? ')
+        action = input('Your move? i.e. x,y : ')
         return (int(action.split(',')[0]),int(action.split(',')[1]))
 
     def episode_over(self, winner):
         if winner == DRAW:
-            print 'Game over! It was a draw.'
+            print('Game over! It was a draw.')
         else:
-            print 'Game over! Winner: Player {0}'.format(winner)
+            print('Game over! Winner: Player {0}'.format(winner))
 
 def play(agent1, agent2):
     state = emptystate()
@@ -300,13 +300,13 @@ if __name__ == "__main__":
     #series = ['P1-Win', 'P2-Win', 'Draw']
     colors = ['r','b','g','c','m','b']
     markers = ['+', '.', 'o', '*', '^', 's']
-    f = open('results.csv', 'wb')
-    writer = csv.writer(f)    
+    f = open('results.csv', 'w')
+    writer = csv.writer(f)
     writer.writerow(series)
     perf = [[] for _ in range(len(series) + 1)]
     for i in range(10000):
         if i % 10 == 0:
-            print 'Game: {0}'.format(i)
+            print('Game: {0}'.format(i))
             probs = measure_performance_vs_random(p1, p2)
             writer.writerow(probs)
             f.flush()
@@ -325,7 +325,7 @@ if __name__ == "__main__":
     plt.title('RL Agent Performance vs. Random Agent\n({0} loss value, self-play)'.format(p1.lossval))
     #plt.title('P1 Loss={0} vs. P2 Loss={1}'.format(p1.lossval, p2.lossval))
     plt.legend()
-    #plt.show()
+    plt.show()
     #plt.savefig('p1loss{0}vsp2loss{1}.png'.format(p1.lossval, p2.lossval))
     plt.savefig('selfplay_random_{0}loss.png'.format(p1.lossval))
     while True:
